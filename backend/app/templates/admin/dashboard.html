@@ -1,0 +1,210 @@
+{% extends "admin/base_site.html" %}
+{% load i18n static %}
+
+{% block extrastyle %}
+{{ block.super }}
+<style>
+    .dashboard-stats {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 20px;
+        margin: 20px 0;
+    }
+    
+    .stat-card {
+        background: white;
+        padding: 24px;
+        border-radius: 8px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        text-align: center;
+        border-left: 4px solid #2c5aa0;
+        transition: transform 0.2s ease;
+    }
+    
+    .stat-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+    
+    .stat-card h3 {
+        color: #2c5aa0;
+        margin: 0 0 8px 0;
+        font-size: 2.5rem;
+        font-weight: bold;
+    }
+    
+    .stat-card p {
+        color: #666;
+        margin: 0;
+        font-size: 1rem;
+        font-weight: 500;
+    }
+    
+    .recent-activity {
+        background: white;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        margin: 20px 0;
+    }
+    
+    .recent-activity h2 {
+        color: #2c5aa0;
+        margin-top: 0;
+        border-bottom: 2px solid #f0f0f0;
+        padding-bottom: 10px;
+    }
+    
+    .activity-item {
+        padding: 12px 0;
+        border-bottom: 1px solid #f0f0f0;
+    }
+    
+    .activity-item:last-child {
+        border-bottom: none;
+    }
+    
+    .activity-meta {
+        color: #666;
+        font-size: 0.9rem;
+        margin-bottom: 4px;
+    }
+    
+    .activity-content {
+        color: #333;
+        font-weight: 500;
+    }
+    
+    .top-caseworkers {
+        background: white;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        margin: 20px 0;
+    }
+    
+    .top-caseworkers h2 {
+        color: #2c5aa0;
+        margin-top: 0;
+        border-bottom: 2px solid #f0f0f0;
+        padding-bottom: 10px;
+    }
+    
+    .caseworker-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 8px 0;
+        border-bottom: 1px solid #f0f0f0;
+    }
+    
+    .caseworker-item:last-child {
+        border-bottom: none;
+    }
+    
+    .caseworker-name {
+        font-weight: 500;
+        color: #333;
+    }
+    
+    .caseworker-count {
+        background: #28a745;
+        color: white;
+        padding: 4px 8px;
+        border-radius: 12px;
+        font-size: 0.8rem;
+        font-weight: bold;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div id="content-main">
+    <h1 style="color: #2c5aa0; margin-bottom: 30px;">📊 Case Note Management Dashboard</h1>
+    
+    <!-- Statistics Cards -->
+    <div class="dashboard-stats">
+        <div class="stat-card">
+            <h3>{{ total_clients }}</h3>
+            <p>Total Clients</p>
+        </div>
+        <div class="stat-card">
+            <h3>{{ total_case_notes }}</h3>
+            <p>Total Case Notes</p>
+        </div>
+        <div class="stat-card">
+            <h3>{{ recent_case_notes }}</h3>
+            <p>Case Notes (Last 7 Days)</p>
+        </div>
+        <div class="stat-card">
+            <h3>{{ top_caseworkers.count }}</h3>
+            <p>Active Caseworkers</p>
+        </div>
+    </div>
+    
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+        <!-- Recent Activity -->
+        <div class="recent-activity">
+            <h2>📝 Recent Case Notes</h2>
+            {% if recent_notes %}
+                {% for note in recent_notes %}
+                <div class="activity-item">
+                    <div class="activity-meta">
+                        {{ note.created_at|date:"M d, Y H:i" }} - {{ note.get_interaction_type_display }}
+                    </div>
+                    <div class="activity-content">
+                        <strong>{{ note.client.full_name }}</strong> ({{ note.client.client_id }})
+                    </div>
+                    <div style="color: #666; font-size: 0.9rem; margin-top: 4px;">
+                        {{ note.content|truncatewords:20 }}
+                    </div>
+                    <div style="color: #999; font-size: 0.8rem; margin-top: 4px;">
+                        By: {{ note.created_by.get_full_name|default:note.created_by.username }}
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <p style="color: #666; text-align: center; padding: 20px;">No recent case notes found.</p>
+            {% endif %}
+        </div>
+        
+        <!-- Top Caseworkers -->
+        <div class="top-caseworkers">
+            <h2>👥 Top Caseworkers</h2>
+            {% if top_caseworkers %}
+                {% for caseworker in top_caseworkers %}
+                <div class="caseworker-item">
+                    <div class="caseworker-name">
+                        {{ caseworker.get_full_name|default:caseworker.username }}
+                    </div>
+                    <div class="caseworker-count">
+                        {{ caseworker.note_count }} notes
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <p style="color: #666; text-align: center; padding: 20px;">No caseworker activity found.</p>
+            {% endif %}
+        </div>
+    </div>
+    
+    <!-- Quick Actions -->
+    <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #2c5aa0;">
+        <h3 style="color: #2c5aa0; margin-top: 0;">🚀 Quick Actions</h3>
+        <div style="display: flex; gap: 15px; flex-wrap: wrap;">
+            <a href="{% url 'admin:clients_client_add' %}" class="button" style="text-decoration: none;">
+                ➕ Add New Client
+            </a>
+            <a href="{% url 'admin:case_notes_casenote_add' %}" class="button" style="text-decoration: none;">
+                📝 Create Case Note
+            </a>
+            <a href="{% url 'admin:clients_client_changelist' %}" class="button" style="text-decoration: none;">
+                👥 View All Clients
+            </a>
+            <a href="{% url 'admin:case_notes_casenote_changelist' %}" class="button" style="text-decoration: none;">
+                📋 View All Case Notes
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %} 
