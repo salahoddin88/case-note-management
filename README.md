@@ -108,7 +108,7 @@ The Docker setup automatically runs migrations and seeds sample data during the 
 ### Demo Credentials
 
 **Caseworkers:**
-- Username: `caseworker1` - `caseworker5`
+- Username: `sarah.smith` - `john.doe`
 - Password: `password123`
 
 **Admin:**
